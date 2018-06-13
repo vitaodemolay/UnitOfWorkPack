@@ -116,7 +116,7 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
 
 ```
 
-    ### Dapper sample
+   ### Dapper sample
     
 ```csharp
     ///Internal Class that inherety the Repository and implement the Internal Interface
@@ -143,7 +143,7 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
             uow.saveChange();
         }
     
-    ```
+ ```
     
     
     
