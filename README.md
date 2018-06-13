@@ -145,6 +145,50 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
     
  ```
     
-    
-    
-    
+   ### MongoDb sample
+```csharp
+        //Context implementation
+        class MyContext : MongoContext
+        {
+            public MyContext(string connectionstring, string databasename)
+                : base(connectionstring, databasename)
+            {
+            }
+
+            public override void OnModelBuilder()
+            {
+                if (!BsonClassMap.IsClassMapRegistered(typeof(Car)))
+                    BsonClassMap.RegisterClassMap<Car>(model =>
+                    {
+                        model.AutoMap();
+                        model.SetIdMember(model.GetMemberMap(m => m.id));
+                    });
+            }
+        }
+        
+        
+        //Repository implementation
+        internal class MyRepository<TEntity, TContext> : RepositoryMongo<TEntity, TContext>,ITest<TEntity>
+            where TEntity : class
+            where TContext : MongoContext
+        {
+            public MyRepository(IUnitOfWorkDocument<TContext> unitOfWork, string collectionName, KeyValuePair<string, Type> IdFieldMetadata)
+                : base(unitOfWork, collectionName, IdFieldMetadata)
+            {
+            }
+        }
+        
+        
+        //.........
+        [TestMethod]
+        public void TestInit()
+        {
+            this.uow = new UnitOfWorkMongo<MyContext>(new MyContext(mongoConnectionString, mongoDatabaseName));
+            this.RepositoryCar = new MyRepository<Car, MyContext>(this.uow, "Car", new KeyValuePair<string, Type>("id", typeof(int)));
+            
+            RepositoryCar.Add(new Car { id = 1, name = "Honda Civic" });
+            
+            //Don't use uow.SaveChange() for MongoDB
+        }
+        
+```
