@@ -54,6 +54,27 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
             }
         }
         
+        ///Internal Interface that implement the interfaces that you want
+        internal interface ITest<TEntity> : IRepositoryReadOnly<TEntity>,
+                                            IRepositoryReadOnlyExtended<TEntity>,
+                                            IRepositoryWrite<TEntity> where TEntity : class
+        {
+
+        }
+
+        ///Internal Class that inherety the Repository and implement the Internal Interface
+        internal class MyRepository<TEntity, TContext> : RepositoryEF<TEntity, TContext>, ITest<TEntity>
+            where TEntity : class
+            where TContext : DbContext
+        {
+            public MyRepository(IUnitOfWork<TContext> unitOfWork)
+                : base(unitOfWork)
+            {
+
+            }
+
+        }
+        
         //.......
         //Test for creation cars using only unitofwork 
         [TestMethod]
@@ -61,17 +82,19 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
         {
             vmuow.UnitOfWorkEFcore<Context> uow = new vmuow.UnitOfWorkEFcore<Context>(new DbContextOptionsBuilder<Context>()
                                                                                 .UseInMemoryDatabase("Teste"));
+                                                                                
+            ITest<Car> RepCar = new MyRepository<Car, Context>(uow);
 
             using (var ctx = uow.dbContext)
             {
-                ctx.Cars.Add(new Car { id = 1, name = "Honda Civic" });
-                ctx.SaveChanges();
+                RepCar.Add(new Car { id = 1, name = "Honda Civic" });
+                uow.SaveChanges();
             }
 
             IList<Car> cars = null;
             using(var ctx = uow.dbContext)
             {
-                 cars = ctx.Cars.ToList();
+                 cars = RepCar.FindAll().ToList();
             }
 
             Assert.AreEqual(1, cars.Count);
@@ -85,18 +108,41 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
 
             using (var ctx = uow.dbContext)
             {
-                ctx.Cars.Update(carTst);
-                ctx.SaveChanges();
+                RepCar.Update(carTst);
+                uow.SaveChanges();
             }
 
-            cars = null;
-            using (var ctx = uow.dbContext)
-            {
-                cars = ctx.Cars.ToList();
-            }
-
-            Assert.AreEqual(1, cars.Count);
-            Assert.AreEqual("Toyota Corola", cars.First().name);
         }
 
 ```
+
+    ### Dapper sample
+    
+    ```csharp
+    ///Internal Class that inherety the Repository and implement the Internal Interface
+    internal class InternalRepository<TEntity, TContext> : RepositoryDapper<TEntity, TContext>,  ITest<TEntity>
+             where TEntity : class
+             where TContext : ConnectionContext
+        {
+            public InternalRepository(IUnitOfWork<TContext> unitOfWork, string tablename, Dictionary<string, Type> fieldIdName)
+                : base(unitOfWork, tablename, fieldIdName)
+            {
+            }
+        }
+        
+        //......... 
+        [TestMethod]
+        public void TestInsert10Cars()
+        {
+            string sql { get { return $"INSERT INTO {tablename} VALUES(@id, @name)"; } }
+            
+            IDictionary<string, object> param = new ExpandoObject();
+            param.Add("@id", i + 1);
+            param.Add("@name", carnames[i]);
+            this.MyCarsRepository.execute(sql, param);
+            uow.saveChange();
+        }
+    
+    ```
+    
+    
