@@ -118,7 +118,7 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
 
     ### Dapper sample
     
-    ```csharp
+```csharp
     ///Internal Class that inherety the Repository and implement the Internal Interface
     internal class InternalRepository<TEntity, TContext> : RepositoryDapper<TEntity, TContext>,  ITest<TEntity>
              where TEntity : class
@@ -144,5 +144,7 @@ It have a separeted project with Interfaces for you easily apply Dependecy injec
         }
     
     ```
+    
+    
     
     
